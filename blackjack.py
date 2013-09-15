@@ -257,14 +257,38 @@ class BJ(object):
     def __contains__(self, value):
         return find(self.root, value, self._comparator) is not None
 
+    def __len__(self):
+        stack = [self.root]
+        acc = 0
+
+        while stack:
+            node = stack.pop()
+            if node is not NULL:
+                stack.append(node.left)
+                stack.append(node.right)
+                acc += 1
+
+        return acc
+
     def add(self, value):
         self.root = insert(self.root, value, self._comparator)
+
+    def discard(self, value):
+        self.root = delete(self.root, value, self._comparator)
 
 
 from unittest import TestCase
 
 
 class TestBlackjack(TestCase):
+
+    def test_len_single(self):
+        bj = BJ([1])
+        self.assertEqual(1, len(bj))
+
+    def test_len_many(self):
+        bj = BJ(range(10))
+        self.assertEqual(10, len(bj))
 
     def test_contains_single(self):
         bj = BJ([1])
@@ -275,3 +299,8 @@ class TestBlackjack(TestCase):
         self.assertTrue(1 in bj)
         self.assertTrue(2 in bj)
         self.assertTrue(3 in bj)
+
+    def test_discard(self):
+        bj = BJ([1])
+        bj.discard(1)
+        self.assertTrue(1 not in bj)
