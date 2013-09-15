@@ -241,6 +241,37 @@ def delete(node, value, comparator):
 class BJ(object):
     """
     A red-black tree.
+
+    Blackjacks are sequences.
     """
 
     root = NULL
+
+    def __init__(self, iterable=None, comparator=cmp):
+        self._comparator = cmp
+
+        if iterable is not None:
+            for item in iterable:
+                self.add(item)
+
+    def __contains__(self, value):
+        return find(self.root, value, self._comparator) is not None
+
+    def add(self, value):
+        self.root = insert(self.root, value, self._comparator)
+
+
+from unittest import TestCase
+
+
+class TestBlackjack(TestCase):
+
+    def test_contains_single(self):
+        bj = BJ([1])
+        self.assertTrue(1 in bj)
+
+    def test_contains_several(self):
+        bj = BJ([1, 2, 3])
+        self.assertTrue(1 in bj)
+        self.assertTrue(2 in bj)
+        self.assertTrue(3 in bj)
