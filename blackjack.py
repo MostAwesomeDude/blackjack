@@ -190,6 +190,10 @@ def delete(node, value, comparator):
     Delete a value from a tree.
     """
 
+    # Base case: The empty tree cannot possibly have the desired value.
+    if node is NULL:
+        raise KeyError(value)
+
     direction = comparator(value, node.value)
 
     # Because we lean to the left, the left case stands alone.
@@ -212,8 +216,9 @@ def delete(node, value, comparator):
             return NULL
 
         # No? Okay. Move more reds to the right so that we can continue to
-        # traverse in that direction.
-        if not node.right.red and not node.right.left.red:
+        # traverse in that direction. At *this* spot, we do have to confirm
+        # that node.right is not NULL...
+        if not node.right.red and node.right.left and not node.right.left.red:
             node = move_red_right(node)
 
         if direction > 0:
@@ -304,3 +309,25 @@ class TestBlackjack(TestCase):
         bj = BJ([1])
         bj.discard(1)
         self.assertTrue(1 not in bj)
+
+    def test_discard_missing_empty(self):
+        bj = BJ()
+        self.assertRaises(KeyError, bj.discard, 2)
+
+    def test_discard_missing(self):
+        bj = BJ([1])
+        self.assertRaises(KeyError, bj.discard, 2)
+
+    def test_hashproof(self):
+        """
+        Generate around 32MiB of numeric data and insert it into a single
+        tree.
+
+        This is a time-sensitive test that should complete in a few seconds
+        instead of taking hours.
+
+        See http://bugs.python.org/issue13703#msg150620 for context.
+        """
+
+        g = ((x*(2**64 - 1), hash(x*(2**64 - 1))) for x in xrange(1, 100000))
+        bj = BJ(g)
