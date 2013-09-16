@@ -275,11 +275,42 @@ class BJ(object):
 
         return acc
 
+    def __iter__(self):
+        node = self.root
+        stack = []
+
+        while stack or node is not NULL:
+            if node is not NULL:
+                stack.append(node)
+                node = node.left
+            else:
+                node = stack.pop()
+                yield node.value
+                node = node.right
+
     def add(self, value):
         self.root = insert(self.root, value, self._comparator)
 
     def discard(self, value):
         self.root = delete(self.root, value, self._comparator)
+
+    def find(self, value):
+        return find(self.root, value, self._comparator)
+
+
+class Deck(object):
+
+    def __init__(self, mapping=None):
+        self._bj = BJ(mapping, comparator=lambda (x,y),(xx,yy): cmp(x,xx))
+
+    def __getitem__(self, key):
+        return self._bj.find(key)[1]
+
+    def __setitem__(self, key, value):
+        self._bj.add((key, value))
+
+    def __delitem__(self, key):
+        self._bj.discard(key)
 
 
 from unittest import TestCase
@@ -305,6 +336,16 @@ class TestBlackjack(TestCase):
         self.assertTrue(2 in bj)
         self.assertTrue(3 in bj)
 
+    def test_iter_single(self):
+        l = [1]
+        bj = BJ(l)
+        self.assertEqual(list(iter(bj)), l)
+
+    def test_iter_several(self):
+        l = range(10)
+        bj = BJ(l)
+        self.assertEqual(list(iter(bj)), l)
+
     def test_discard(self):
         bj = BJ([1])
         bj.discard(1)
@@ -329,5 +370,5 @@ class TestBlackjack(TestCase):
         See http://bugs.python.org/issue13703#msg150620 for context.
         """
 
-        g = ((x*(2**64 - 1), hash(x*(2**64 - 1))) for x in xrange(1, 100000))
+        g = ((x*(2**64 - 1), hash(x*(2**64 - 1))) for x in xrange(1, 10000))
         bj = BJ(g)
