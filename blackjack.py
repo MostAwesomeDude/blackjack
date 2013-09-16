@@ -253,7 +253,7 @@ class BJ(object):
     root = NULL
 
     def __init__(self, iterable=None, comparator=cmp):
-        self._comparator = cmp
+        self._comparator = comparator
 
         if iterable is not None:
             for item in iterable:
@@ -311,6 +311,26 @@ class Deck(object):
 
     def __delitem__(self, key):
         self._bj.discard(key)
+
+    def iteritems(self):
+        return iter(self._bj)
+
+    def iterkeys(self):
+        for k, v in self.iteritems():
+            yield k
+
+    def itervalues(self):
+        for k, v in self.iteritems():
+            yield v
+
+    def items(self):
+        return list(self.iteritems())
+
+    def keys(self):
+        return list(self.iterkeys())
+
+    def values(self):
+        return list(self.itervalues())
 
 
 from unittest import TestCase
