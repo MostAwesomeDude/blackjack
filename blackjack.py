@@ -1,25 +1,24 @@
 from collections import namedtuple
+from operator import itemgetter
 
 Node = namedtuple("Node", "value, left, right, red")
 
 NULL = Node(None, None, None, False)
 
 
-def find(node, value, comparator):
+def find(node, value, key):
     """
-    Find a value in a node, using a custom comparator.
+    Find a value in a node, using a key function.
     """
 
     while node is not NULL:
-        direction = comparator(value, node.value)
+        direction = cmp(key(value), key(node.value))
         if direction < 0:
             node = node.left
         elif direction > 0:
             node = node.right
         elif direction == 0:
             return node.value
-        else:
-            raise RuntimeError("Comparator returned bad value")
 
 
 def rotate_left(node):
@@ -80,7 +79,7 @@ def balance(node):
     return node
 
 
-def insert(node, value, comparator):
+def insert(node, value, key):
     """
     Insert a value into a tree rooted at the given node.
 
@@ -97,18 +96,16 @@ def insert(node, value, comparator):
 
     # Recursive case: Insertion into a non-empty tree is insertion into
     # whichever of the two sides is correctly compared.
-    direction = comparator(value, node.value)
+    direction = cmp(key(value), key(node.value))
     if direction < 0:
-        left = insert(node.left, value, comparator)
+        left = insert(node.left, value, key)
         node = node._replace(left=left)
     elif direction > 0:
-        right = insert(node.right, value, comparator)
+        right = insert(node.right, value, key)
         node = node._replace(right=right)
     elif direction == 0:
         # Exact hit on an existing node. In this case, perform an update.
         node = node._replace(value=value)
-    else:
-        raise RuntimeError("Comparator returned bad value")
 
     # And balance on the way back up.
     return balance(node)
@@ -185,7 +182,7 @@ def delete_max(node):
     return balance(node)
 
 
-def delete(node, value, comparator):
+def delete(node, value, key):
     """
     Delete a value from a tree.
     """
@@ -194,14 +191,14 @@ def delete(node, value, comparator):
     if node is NULL:
         raise KeyError(value)
 
-    direction = comparator(value, node.value)
+    direction = cmp(key(value), key(node.value))
 
     # Because we lean to the left, the left case stands alone.
     if direction < 0:
         if not node.left.red and not node.left.left.red:
             node = move_red_left(node)
         # Delete towards the left.
-        left = delete(node.left, value, comparator)
+        left = delete(node.left, value, key)
         node = node._replace(left=left)
     else:
         # If we currently lean to the left, lean to the right for now.
@@ -223,7 +220,7 @@ def delete(node, value, comparator):
 
         if direction > 0:
             # Delete towards the right.
-            right = delete(node.right, value, comparator)
+            right = delete(node.right, value, key)
             node = node._replace(right=right)
         else:
             # Annoying case: The current node was the node to delete all
@@ -252,15 +249,18 @@ class BJ(object):
 
     root = NULL
 
-    def __init__(self, iterable=None, comparator=cmp):
-        self._comparator = comparator
+    def __init__(self, iterable=None, key=None):
+        if key is None:
+            self._key = lambda v: v
+        else:
+            self._key = key
 
         if iterable is not None:
             for item in iterable:
                 self.add(item)
 
     def __contains__(self, value):
-        return find(self.root, value, self._comparator) is not None
+        return find(self.root, value, self._key) is not None
 
     def __len__(self):
         stack = [self.root]
@@ -289,19 +289,19 @@ class BJ(object):
                 node = node.right
 
     def add(self, value):
-        self.root = insert(self.root, value, self._comparator)
+        self.root = insert(self.root, value, self._key)
 
     def discard(self, value):
-        self.root = delete(self.root, value, self._comparator)
+        self.root = delete(self.root, value, self._key)
 
     def find(self, value):
-        return find(self.root, value, self._comparator)
+        return find(self.root, value, self._key)
 
 
 class Deck(object):
 
     def __init__(self, mapping=None):
-        self._bj = BJ(mapping, comparator=lambda (x,y),(xx,yy): cmp(x,xx))
+        self._bj = BJ(mapping, key=itemgetter(0))
 
     def __getitem__(self, key):
         return self._bj.find(key)[1]
