@@ -5,6 +5,10 @@ class Node(namedtuple("Node", "value, left, right, red")):
     __slots__ = ()
 
     def size(self):
+        """
+        Recursively find size of a tree. Slow.
+        """
+
         if self is NULL:
             return 0
         return 1 + self.left.size() + self.right.size()
@@ -81,7 +85,8 @@ class Node(namedtuple("Node", "value, left, right, red")):
 
     def insert(self, value, key):
         """
-        Insert a value into a tree rooted at the given node.
+        Insert a value into a tree rooted at the given node, and return
+        whether this was an insertion or update.
 
         Balances the tree during insertion.
 
@@ -92,24 +97,25 @@ class Node(namedtuple("Node", "value, left, right, red")):
         # Base case: Insertion into the empty tree is just creating a new node
         # with no children.
         if self is NULL:
-            return Node(value, NULL, NULL, True)
+            return Node(value, NULL, NULL, True), True
 
         # Recursive case: Insertion into a non-empty tree is insertion into
         # whichever of the two sides is correctly compared.
         direction = cmp(key(value), key(self.value))
         if direction < 0:
-            left = self.left.insert(value, key)
+            left, insertion = self.left.insert(value, key)
             self = self._replace(left=left)
         elif direction > 0:
-            right = self.right.insert(value, key)
+            right, insertion = self.right.insert(value, key)
             self = self._replace(right=right)
         elif direction == 0:
             # Exact hit on an existing node (this node, in fact). In this
             # case, perform an update.
             self = self._replace(value=value)
+            insertion = False
 
         # And balance on the way back up.
-        return self.balance()
+        return self.balance(), insertion
 
     def move_red_left(self):
         """
@@ -253,6 +259,7 @@ class BJ(object):
     """
 
     root = NULL
+    _len = 0
 
     def __init__(self, iterable=None, key=None):
         if key is None:
@@ -268,7 +275,7 @@ class BJ(object):
         return self.root.find(value, self._key) is not None
 
     def __len__(self):
-        return self.root.size()
+        return self._len
 
     def __iter__(self):
         node = self.root
@@ -284,20 +291,24 @@ class BJ(object):
                 node = node.right
 
     def add(self, value):
-        self.root = self.root.insert(value, self._key)
+        self.root, insertion = self.root.insert(value, self._key)
+        self._len += insertion
 
     def discard(self, value):
         self.root = self.root.delete(value, self._key)
+        self._len -= 1
 
     def find(self, value):
         return self.root.find(value, self._key)
 
     def pop_max(self):
         self.root, value = self.root.delete_max()
+        self._len -= 1
         return value
 
     def pop_min(self):
         self.root, value = self.root.delete_min()
+        self._len -= 1
         return value
 
 
@@ -373,6 +384,18 @@ class TestBlackjack(TestCase):
     def test_len_many(self):
         bj = BJ(range(10))
         self.assertEqual(10, len(bj))
+
+    def test_len_many_duplicate(self):
+        bj = BJ(range(10))
+        bj.add(0)
+        bj.add(5)
+        bj.add(9)
+        self.assertEqual(10, len(bj))
+
+    def test_len_after_discard(self):
+        bj = BJ(range(10))
+        bj.discard(0)
+        self.assertEqual(9, len(bj))
 
     def test_contains_single(self):
         bj = BJ([1])
