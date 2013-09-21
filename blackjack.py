@@ -72,7 +72,8 @@ def balance(node):
     if node.left.red and node.left.left.red:
         node = rotate_right(node)
 
-    # Finally, fix double-reds by moving the red link up to the next level.
+    # Finally, move red children on both sides up to the next level, reducing
+    # the total redness.
     if node.left.red and node.right.red:
         node = flip(node)
 
@@ -336,6 +337,28 @@ class Deck(object):
 from unittest import TestCase
 
 
+class TestTrees(TestCase):
+
+    def test_balance_right(self):
+        node = Node(1, NULL, Node(2, NULL, NULL, True), False)
+        balanced = Node(2, Node(1, NULL, NULL, True), NULL, False)
+        self.assertEqual(balance(node), balanced)
+
+    def test_balance_four(self):
+        node = Node(2, Node(1, NULL, NULL, True), Node(3, NULL, NULL, True),
+                    False)
+        balanced = Node(2, Node(1, NULL, NULL, False),
+                        Node(3, NULL, NULL, False), True)
+        self.assertEqual(balance(node), balanced)
+
+    def test_balance_left_four(self):
+        node = Node(3, Node(2, Node(1, NULL, NULL, True), NULL, True), NULL,
+                    False)
+        balanced = Node(2, Node(1, NULL, NULL, False),
+                        Node(3, NULL, NULL, False), True)
+        self.assertEqual(balance(node), balanced)
+
+
 class TestBlackjack(TestCase):
 
     def test_len_single(self):
@@ -390,5 +413,5 @@ class TestBlackjack(TestCase):
         See http://bugs.python.org/issue13703#msg150620 for context.
         """
 
-        g = ((x*(2**64 - 1), hash(x*(2**64 - 1))) for x in xrange(1, 10000))
+        g = ((x*(2**64 - 1), hash(x*(2**64 - 1))) for x in xrange(1, 1000))
         bj = BJ(g)
