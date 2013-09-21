@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import MutableMapping, MutableSet, namedtuple
 from operator import itemgetter
 
 class Node(namedtuple("Node", "value, left, right, red")):
@@ -251,11 +251,23 @@ class Node(namedtuple("Node", "value, left, right, red")):
 NULL = Node(None, None, None, False)
 
 
-class BJ(object):
+class BJ(MutableSet):
     """
     A red-black tree.
 
-    Blackjacks are iterable ordered collections.
+    Blackjacks are based on traditional self-balancing tree theory, and have
+    logarithmic time and space bounds on all mutations in the worst case, and
+    linear bounds on iteration.
+
+    Blackjacks are mutable sets. See ``collections.MutableSet`` for a precise
+    definition of what this class is capable of.
+
+    Iteration on blackjacks is always ordered according to the key function
+    used to create the blackjack.
+
+    In addition to the standard methods, blackjacks can also pop their minimum
+    and maximum values easily, and the ``find()`` method can retrieve the
+    stored value for a key value.
     """
 
     root = NULL
@@ -299,26 +311,53 @@ class BJ(object):
         self._len -= 1
 
     def find(self, value):
+        """
+        Find the actual stored value for a given key value.
+        """
+
         return self.root.find(value, self._key)
 
     def pop_max(self):
+        """
+        Remove the maximum value and return it.
+        """
+
+        if self.root is NULL:
+            raise KeyError("pop from an empty blackjack")
+
         self.root, value = self.root.delete_max()
         self._len -= 1
         return value
 
     def pop_min(self):
+        """
+        Remove the minimum value and return it.
+        """
+
+        if self.root is NULL:
+            raise KeyError("pop from an empty blackjack")
+
         self.root, value = self.root.delete_min()
         self._len -= 1
         return value
 
 
-class Deck(object):
+class Deck(MutableMapping):
+    """
+    A mutable mapping based on a blackjack.
+
+    Like blackjacks, decks are powered by red-black trees and have the same
+    bounds on operations.
+    """
 
     def __init__(self, mapping=None):
         self._bj = BJ(mapping, key=itemgetter(0))
 
     def __len__(self):
         return len(self._bj)
+
+    def __iter__(self):
+        return self.iterkeys()
 
     def __getitem__(self, key):
         return self._bj.find(key)[1]
@@ -339,15 +378,6 @@ class Deck(object):
     def itervalues(self):
         for k, v in self.iteritems():
             yield v
-
-    def items(self):
-        return list(self.iteritems())
-
-    def keys(self):
-        return list(self.iterkeys())
-
-    def values(self):
-        return list(self.itervalues())
 
 
 from unittest import TestCase
