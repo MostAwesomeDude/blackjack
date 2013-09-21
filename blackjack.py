@@ -4,6 +4,11 @@ from operator import itemgetter
 class Node(namedtuple("Node", "value, left, right, red")):
     __slots__ = ()
 
+    def size(self):
+        if self is NULL:
+            return 0
+        return 1 + self.left.size() + self.right.size()
+
     def find(self, value, key):
         """
         Find a value in a node, using a key function.
@@ -263,17 +268,7 @@ class BJ(object):
         return self.root.find(value, self._key) is not None
 
     def __len__(self):
-        stack = [self.root]
-        acc = 0
-
-        while stack:
-            node = stack.pop()
-            if node is not NULL:
-                stack.append(node.left)
-                stack.append(node.right)
-                acc += 1
-
-        return acc
+        return self.root.size()
 
     def __iter__(self):
         node = self.root
@@ -310,6 +305,9 @@ class Deck(object):
 
     def __init__(self, mapping=None):
         self._bj = BJ(mapping, key=itemgetter(0))
+
+    def __len__(self):
+        return len(self._bj)
 
     def __getitem__(self, key):
         return self._bj.find(key)[1]
