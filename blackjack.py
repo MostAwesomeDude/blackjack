@@ -145,7 +145,7 @@ def delete_min(node):
     # Base case: If there are no nodes lesser than this node, then this is the
     # node to delete.
     if node.left is NULL:
-        return NULL
+        return NULL, node.value
 
     # Acquire more reds if necessary to continue the traversal.
     if not node.left.red and not node.left.left.red:
@@ -153,9 +153,10 @@ def delete_min(node):
 
     # Recursive case: Delete the minimum node of all nodes lesser than this
     # node.
-    node = node._replace(left=delete_max(node.left))
+    left, value = delete_min(node.left)
+    node = node._replace(left=left)
 
-    return balance(node)
+    return balance(node), value
 
 
 def delete_max(node):
@@ -170,7 +171,7 @@ def delete_max(node):
     # Base case: If there are no nodes greater than this node, then this is
     # the node to delete.
     if node.right is NULL:
-        return NULL
+        return NULL, node.value
 
     # Acquire more reds if necessary to continue the traversal.
     if not node.right.red and not node.right.left.red:
@@ -178,9 +179,10 @@ def delete_max(node):
 
     # Recursive case: Delete the maximum node of all nodes greater than this
     # node.
-    node = node._replace(right=delete_max(node.right))
+    right, value = delete_max(node.right)
+    node = node._replace(right=right)
 
-    return balance(node)
+    return balance(node), value
 
 
 def delete(node, value, key):
@@ -245,7 +247,7 @@ class BJ(object):
     """
     A red-black tree.
 
-    Blackjacks are sequences.
+    Blackjacks are iterable ordered collections.
     """
 
     root = NULL
@@ -297,6 +299,14 @@ class BJ(object):
 
     def find(self, value):
         return find(self.root, value, self._key)
+
+    def pop_max(self):
+        self.root, value = delete_max(self.root)
+        return value
+
+    def pop_min(self):
+        self.root, value = delete_min(self.root)
+        return value
 
 
 class Deck(object):
