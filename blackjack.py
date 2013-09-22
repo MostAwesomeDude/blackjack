@@ -216,7 +216,9 @@ class Node(namedtuple("Node", "value, left, right, red")):
 
         # Because we lean to the left, the left case stands alone.
         if direction < 0:
-            if not self.left.red and not self.left.left.red:
+            if (not self.left.red and
+                self.left is not NULL and
+                not self.left.left.red):
                 self = self.move_red_left()
             # Delete towards the left.
             left = self.left.delete(value, key)
@@ -254,10 +256,9 @@ class Node(namedtuple("Node", "value, left, right, red")):
                 # deleted.
                 rnode = self.right
                 while rnode is not NULL:
-                    replacement = rnode.value
                     rnode = rnode.left
 
-                right = self.right.delete_min()
+                right, replacement = self.right.delete_min()
                 self = self._replace(value=replacement, right=right)
 
         return self.balance()
@@ -381,6 +382,7 @@ class Deck(MutableMapping):
         return self.iterkeys()
 
     def __getitem__(self, key):
+        # Messy.
         value = self._bj.root.find_prekeyed(key, self._bj._key)
         if value is None:
             raise KeyError(key)
@@ -390,7 +392,9 @@ class Deck(MutableMapping):
         self._bj.add((key, value))
 
     def __delitem__(self, key):
-        self._bj.discard(key)
+        # Blah. Just do it.
+        value = self[key]
+        self._bj.discard((key, value))
 
     def iteritems(self):
         return iter(self._bj)
