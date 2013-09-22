@@ -27,6 +27,21 @@ class Node(namedtuple("Node", "value, left, right, red")):
             elif direction == 0:
                 return self.value
 
+    def find_prekeyed(self, value, key):
+        """
+        Find a value in a node, using a key function. The value is already a
+        key.
+        """
+
+        while self is not NULL:
+            direction = cmp(value, key(self.value))
+            if direction < 0:
+                self = self.left
+            elif direction > 0:
+                self = self.right
+            elif direction == 0:
+                return self.value
+
     def rotate_left(self):
         """
         Rotate the node to the left.
@@ -283,6 +298,9 @@ class BJ(MutableSet):
             for item in iterable:
                 self.add(item)
 
+    def __repr__(self):
+        return "BJ([%s])" % ", ".join(repr(i) for i in self)
+
     def __contains__(self, value):
         return self.root.find(value, self._key) is not None
 
@@ -353,6 +371,9 @@ class Deck(MutableMapping):
     def __init__(self, mapping=None):
         self._bj = BJ(mapping, key=itemgetter(0))
 
+    def __repr__(self):
+        return "Deck({%s})" % ", ".join("%r: %r" % i for i in self.iteritems())
+
     def __len__(self):
         return len(self._bj)
 
@@ -360,7 +381,10 @@ class Deck(MutableMapping):
         return self.iterkeys()
 
     def __getitem__(self, key):
-        return self._bj.find(key)[1]
+        value = self._bj.root.find_prekeyed(key, self._bj._key)
+        if value is None:
+            raise KeyError(key)
+        return value[1]
 
     def __setitem__(self, key, value):
         self._bj.add((key, value))
@@ -471,5 +495,22 @@ class TestBlackjack(TestCase):
         See http://bugs.python.org/issue13703#msg150620 for context.
         """
 
-        g = ((x*(2**64 - 1), hash(x*(2**64 - 1))) for x in xrange(1, 1000))
+        g = ((x*(2**64 - 1), hash(x*(2**64 - 1))) for x in xrange(1, 10000))
         bj = BJ(g)
+
+
+class TestDeck(TestCase):
+
+    def test_get_set_single(self):
+        d = Deck()
+        d["test"] = "value"
+        self.assertEqual(d["test"], "value")
+
+    def test_get_set_several(self):
+        d = Deck()
+        d["first"] = "second"
+        d["third"] = "fourth"
+        d["fifth"] = "sixth"
+        self.assertEqual(d["first"], "second")
+        self.assertEqual(d["third"], "fourth")
+        self.assertEqual(d["fifth"], "sixth")
